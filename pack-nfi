@@ -12,7 +12,7 @@ dir=`echo $1 | sed -e "s:/$::g" `
 
 rm -f "$dir/boot.jffs2"
 rm -f "$dir/root.jffs2"
-rm -f "$dir/secondstage.gz"
+#rm -f "$dir/secondstage.gz"
 brcmnand=""
 machine="dm800se"
 if [ -f "$dir/version" ]; then
@@ -21,10 +21,10 @@ if [ -f "$dir/version" ]; then
 	machine=`sed -n '2p' $dir/version`
 fi
 
-if [ $dir ]; then
-cp $dir/ssl.bin $dir/secondstage.bin &&
-mv $dir/secondstage.bin $dir/secondstage.gz
-fi
+#if [ $dir ]; then
+#cp $dir/ssl.bin $dir/secondstage.bin &&
+#mv $dir/secondstage.bin $dir/secondstage.gz
+#fi
 
 echo making boot.jffs2
 ./mkfs.jffs2 --root=$dir/boot --faketime --output=$dir/boot.jffs2 --eraseblock=0x4000 -n -l 
