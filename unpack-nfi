@@ -1,0 +1,73 @@
+#!/usr/bin/python
+
+# Originally by tmbinc, hacked to death by noggie
+
+import sys, os, struct
+
+if len(sys.argv) < 3:
+	print "usage:", sys.argv[0], " <xxxx.nfi> <target patch>"
+	exit(-1)
+	
+file = open(sys.argv[1], "r")
+directory = sys.argv[2]
+#os.removedirs(directory)
+if os.path.isdir(directory):
+	print "Warnning: direcotry(",directory,") is already exists,please delete it or select another dirctory!"
+	exit(-1)
+os.mkdir(directory, 0777)
+header = file.read(32)
+
+version=open(directory+"/version","wt")
+if header[:4] != "NFI1" and header[:4] != "NFI2":
+	print "old NFI format detected!"
+	print >>version,"OLD"
+	machine_type = "dm7020"
+	file.seek(0)
+else:
+	machine_type = header[4:4+header[4:].find("\0")]
+	print >>version,header[:4]
+print >>version,machine_type
+version.close()
+
+endianess = {"dm800" : "1234", "dm800se" : "1234", "dm8000" : "1234", "dm7025": "1234", "dm7020": "4321", "dm500hd": "4321","dm500":"4321"}
+endian="1234"
+if endianess.has_key(machine_type):
+	endian=endianess[machine_type]
+
+print "machine type:", machine_type
+
+(total_size, ) = struct.unpack("!L", file.read(4))
+
+p = 0
+while file.tell() < total_size:
+	(size, ) = struct.unpack("!L", file.read(4))
+	
+	output_names = {1: "secondstage.gz", 2: "boot", 3: "root"}
+	if p not in output_names:
+		file.seek(size, 1)
+	else:
+		print "extracting", output_names[p],".........",
+		output_filename = directory + "/" + output_names[p];
+		if p != 1:
+			output_filename += ".jffs2" 
+		output_directory = directory + "/" + output_names[p]
+		output = open(output_filename, "wb")
+		for sector in range(size / 528):
+			d = file.read(528)
+			output.write(d[:512])
+		output.close()
+		if p != 1:
+#			print "unpacking", p, "(ignore errors about mknod, chown)"
+#			if p == 1 :
+#				output_directory = directory + "/boot" 
+			if os.system("./jffs2extract %s %s %s" % (output_filename, output_directory,endian)):
+				print "failed"
+			else:
+				print "sucessed"
+				os.unlink(output_filename)
+				os.system("rm -f " + directory + "/" + output_names[p] + ".devtab")
+		else:
+			print "done"
+	p += 1
+print "All unpacking tasks is finished!"
+

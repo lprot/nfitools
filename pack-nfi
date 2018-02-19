@@ -1,0 +1,39 @@
+#! /bin/sh
+
+# Re-assemble an nfi-file as unpacked by unpack-nfi.py
+
+if [ $# -ne 2 ]; then
+    1>&2 echo "Usage: $0  directory new-nfi.nfi"
+    exit 1
+fi
+
+file=$2;
+dir=`echo $1 | sed -e "s:/$::g" `
+
+rm -f "$dir/boot.jffs2"
+rm -f "$dir/root.jffs2"
+rm -f "$dir/secondstage.gz"
+brcmnand=""
+machine="dm800se"
+if [ -f "$dir/version" ]; then
+	nfiver=`sed -n '1p' $dir/version`
+	[ "_$nfiver" = "_NFI2" ] && brcmnand="--brcmnand"
+	machine=`sed -n '2p' $dir/version`
+fi
+
+if [ $dir ]; then
+cp $dir/ssl.bin $dir/secondstage.bin &&
+mv $dir/secondstage.bin $dir/secondstage.gz
+fi
+
+echo making boot.jffs2
+./mkfs.jffs2 --root=$dir/boot --faketime --output=$dir/boot.jffs2 --eraseblock=0x4000 -n -l 
+
+echo making root.jffs2
+./mkfs.jffs2 --root=$dir/root --faketime --output=$dir/root.jffs2 --eraseblock=0x4000 --pagesize=8192 -n -l 
+
+echo buildimage $file
+./buildimage "$dir/secondstage.gz" "$dir/boot.jffs2" "$dir/root.jffs2" "$machine" 64 > "$file"
+
+#rm -f "$dir/boot.jffs2"
+#rm -f "$dir/root.jffs2"
