@@ -27,12 +27,12 @@ fi
 #fi
 
 echo making boot.jffs2
-./mkfs.jffs2 --root=$dir/boot --faketime --output=$dir/boot.jffs2 --eraseblock=0x4000 -n -l 
+./mkfs.jffs2 --root=$dir/boot --faketime --output=$dir/boot.jffs2 --eraseblock=0x4000 -n -l
 
 echo making root.jffs2
-./mkfs.jffs2 --root=$dir/root --faketime --output=$dir/root.jffs2 --eraseblock=0x4000 --pagesize=8192 -n -l 
+./mkfs.jffs2 --root=$dir/root --faketime --output=$dir/root.jffs2 --eraseblock=0x4000 --pagesize=8192 -n -l
 
-echo buildimage $file
+echo buildimage $file $machine
 ./buildimage "$dir/secondstage.gz" "$dir/boot.jffs2" "$dir/root.jffs2" "$machine" 64 > "$file"
 
 #rm -f "$dir/boot.jffs2"

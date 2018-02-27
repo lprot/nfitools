@@ -5,14 +5,14 @@
 import sys, os, struct
 
 if len(sys.argv) < 3:
-	print "usage:", sys.argv[0], " <xxxx.nfi> <target patch>"
+	print "Usage:", sys.argv[0], " <xxxx.nfi> <target path>"
 	exit(-1)
-	
+
 file = open(sys.argv[1], "r")
 directory = sys.argv[2]
 #os.removedirs(directory)
 if os.path.isdir(directory):
-	print "Warnning: direcotry(",directory,") is already exists,please delete it or select another dirctory!"
+	print "Warning: directory ",directory," already exists, please delete it or select another directory!"
 	exit(-1)
 os.mkdir(directory, 0777)
 header = file.read(32)
@@ -41,7 +41,7 @@ print "machine type:", machine_type
 p = 0
 while file.tell() < total_size:
 	(size, ) = struct.unpack("!L", file.read(4))
-	
+
 	output_names = {1: "secondstage.gz", 2: "boot", 3: "root"}
 	if p not in output_names:
 		file.seek(size, 1)
@@ -49,7 +49,7 @@ while file.tell() < total_size:
 		print "extracting", output_names[p],".........",
 		output_filename = directory + "/" + output_names[p];
 		if p != 1:
-			output_filename += ".jffs2" 
+			output_filename += ".jffs2"
 		output_directory = directory + "/" + output_names[p]
 		output = open(output_filename, "wb")
 		for sector in range(size / 528):
@@ -59,15 +59,15 @@ while file.tell() < total_size:
 		if p != 1:
 #			print "unpacking", p, "(ignore errors about mknod, chown)"
 #			if p == 1 :
-#				output_directory = directory + "/boot" 
+#				output_directory = directory + "/boot"
 			if os.system("./jffs2extract %s %s %s" % (output_filename, output_directory,endian)):
 				print "failed"
 			else:
-				print "sucessed"
+				print "done"
 				os.unlink(output_filename)
 				os.system("rm -f " + directory + "/" + output_names[p] + ".devtab")
 		else:
 			print "done"
 	p += 1
-print "All unpacking tasks is finished!"
+print "All unpacking tasks are finished!"
 
